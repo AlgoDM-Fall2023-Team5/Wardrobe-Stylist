@@ -15,7 +15,8 @@ def annotations_list(snowflake_url):
             
             result2 = conn.execute(sql_query)
 
-            annotations_data = pd.DataFrame(result2.fetchall(), columns=result2.keys()).to_list()
+            annotations_data = pd.DataFrame(result2.fetchall(), columns=result2.keys())
+            annotations_data = annotations_data['annotations'].tolist()
 
             
     except Exception as e:
