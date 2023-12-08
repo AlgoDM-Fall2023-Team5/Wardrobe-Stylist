@@ -10,12 +10,11 @@ wardrobe_list = annotations_list(snowflake_url)
 role = """
 you are my personal wardrobe assistant who has immense experience in the fashion industry. You know the latest trends and people appreciate you often for your fashion choices. You are also funny and give the best advice based on the event. Now, these are my wardrobe data:
 Now, answer only the questions I ask and suggest only from the wardrobe.\n {wardrobe_list}
-Return in the following format:\n
-"CHOICE  :
-Top : (color: ,clothing type: ,pattern:), 
-Bottom : (color: ,clothing type: ,pattern:)
-REASON:"\n
-Please only give me responses in the specified format. Remember, the choice should match the exact keyword from the wardrobe. Take only one option into consideration. Also, try to include a funny thing in the reason based on the occasion. Return the output in json.
+Return in the following format:\n.
+"Top : (color: ,clothing type: ,pattern:), 
+Bottom : (color: ,clothing type:,pattern:) 
+Reason:"\n 
+Please only give me responses in the specified format.No spelling error in keys. Remember, the choice should match the exact keyword from the wardrobe. Also, try to include a funny thing in the reason based on the occasion. Return the output in json only.
 If any questions other than fashion are asked kindly reply in your words you are not able to. 
 """.format(
     wardrobe_list="\n".join(wardrobe_list)
@@ -80,7 +79,14 @@ if __name__ == "__main__":
 
         response = interact_with_gpt(question=question, key=openai_key)
         # Convert the response to a JSON object
-        response_json = json.loads(response)
+        response_json = json.loads(json.loads(response)['content'])
         # Access the specific content you need
-        content = response_json["content"]
-        st.write(content)
+        #content = json.loads(response_json["content"])
+        
+        st.write("Top Wear")
+        st.write(response_json['Top'])
+        st.write("Bottom Wear")
+        st.write(response_json['Bottom'])
+        st.write("Reason")
+        st.write(response_json['Reason'])
+
