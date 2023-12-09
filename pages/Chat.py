@@ -2,7 +2,7 @@ import streamlit as st
 from snowflake_list import annotations_list
 from openai import OpenAI
 import json
-
+from macys_items import fetch_product_info
 
 snowflake_url = st.secrets.project_snowflake.url
 # role ######################
@@ -19,7 +19,7 @@ If any questions other than fashion are asked kindly reply in your words you are
 """.format(
     wardrobe_list="\n".join(wardrobe_list)
 )
-
+Gender = "Men"
 
 def main():
     st.sidebar.title("Chat")
@@ -89,4 +89,37 @@ if __name__ == "__main__":
         st.write(response_json['Bottom'])
         st.write("Reason")
         st.write(response_json['Reason'])
+
+
+        # Recommendations
+        st.header("Top Recommendations:")
+        top_recommendations = fetch_product_info(response_json['Top']['color'],
+                                                  response_json['Top']['clothing type'],
+                                                  "outerwear",
+                                                  response_json['Top']['pattern'],
+                                                  Gender)
+        if top_recommendations:
+            count = 1
+            for product in top_recommendations:
+                st.write(f"Product {count}: [link]"+"www.macys.com"+f"{product['product_url']}")
+                count = count + 1
+        else:
+            st.write("Error Retrieving Recommendations")
+
+
+        st.header("Bottom Recommendations:")
+        Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
+                                                  response_json['Bottom']['clothing type'],
+                                                  response_json['Bottom']['pattern'],
+                                                  Gender)
+        
+        if Bottom_recommendations:
+            count = 1
+            for product in Bottom_recommendations:
+                st.write(f"Product {count}: [link]"+"www.macys.com"+f"{product['product_url']}")
+                count = count + 1
+        else:
+            st.write("Error Retrieving Recommendations")
+
+
 
