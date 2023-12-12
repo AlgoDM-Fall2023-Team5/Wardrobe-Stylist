@@ -36,10 +36,11 @@ try:
 except Exception as e:
     st.error(f"Error collecting AWS secrets: {str(e)}")
 
-snowflake_url = st.secrets.project_snowflake.url
+
 
 # role ######################
 try:
+    snowflake_url = st.secrets.project_snowflake.url
     wardrobe_list = annotations_list(snowflake_url)
 except Exception as e:
     st.error(f"Error fetching wardrobe list: {str(e)}")
