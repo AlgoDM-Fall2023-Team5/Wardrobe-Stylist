@@ -1,9 +1,5 @@
-<<<<<<< HEAD
+__pycache__/
 Wardrobe/
 keys.py
 responses.json
 tags.csv
-__pycache__/
-=======
-serviceAccountKey.json
->>>>>>> 8bbe91773a6e30ad3821141a33d3f05574ef5085
