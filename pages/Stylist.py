@@ -37,27 +37,7 @@ try:
 except Exception as e:
     st.error(f"Error collecting AWS secrets: {str(e)}")
 
-def annotations_list(snowflake_url):
-    # Create an SQLAlchemy engine
-    engine = create_engine(snowflake_url)
 
-    try:
-        with engine.connect() as conn:
-            sql_query = "select annotations from wardrobe_tags;"
-            
-            result2 = conn.execute(sql_query)
-
-            annotations_data = pd.DataFrame(result2.fetchall(), columns=result2.keys())
-            annotations_data = annotations_data['annotations'].tolist()
-
-            
-    except Exception as e:
-            print(e)
-    finally:
-        # Close the connection
-        conn.close()
-
-    return annotations_data
 
 # role ######################
 try:
