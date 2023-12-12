@@ -10,6 +10,7 @@ from io import BytesIO
 import boto3
 from snowflake_list import annotations_list
 from macys_items import fetch_product_info
+from sqlalchemy import create_engine
 
 # Load CLIP model
 try:
