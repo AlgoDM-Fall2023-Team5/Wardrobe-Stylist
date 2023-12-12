@@ -12,6 +12,10 @@ from snowflake_list import annotations_list
 from macys_items import fetch_product_info
 
 
+# Load CLIP model
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model, preprocess = clip.load("ViT-B/32", device=device)
+
 # Collect AWS secrets
 bucket_name = st.secrets.aws_credentials.bucket_name
 service_name = st.secrets.aws_credentials.service_name
@@ -27,66 +31,8 @@ s3_client = boto3.client(
     region_name=region_name
 )
 
-# Load image features and image IDs from S3
-def load_features_ids():
-    features_path_s3 = "features"
-
-    # Load the image IDs from S3
-    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'image_ids.csv')['Body'].read()
-    image_ids = pd.read_csv(BytesIO(image_ids_data))
-    image_ids = list(image_ids['image_id'])
-
-    # Load the features vectors from S3
-    features_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'features.npy')['Body'].read()
-    image_features = np.load(BytesIO(features_data))
-
-
-    if device == "cpu":
-        image_features = torch.from_numpy(image_features).float().to(device)
-    else:
-        image_features = torch.from_numpy(image_features).to(device)
-
-    return image_features, image_ids
-
-# Function to display images from S3
-def display_images_from_s3(image_ids):
-    columns = st.columns(3)
-    for j, image_id in enumerate(image_ids):
-        image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
-        image = Image.open(BytesIO(image_data))
-        columns[j].image(image, caption=f"Image {j+1}")
-
-
-
-# Load CLIP model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/32", device=device)
-
-# Function to encode search query
-def encode_search_query(search_query):
-    with torch.no_grad():
-        text_encoded = model.encode_text(clip.tokenize(search_query).to(device))
-        text_encoded /= text_encoded.norm(dim=-1, keepdim=True)
-    return text_encoded
-
-# Function to find best matches
-def find_best_matches(text_features, image_features, image_ids, results_count=3):
-    similarities = (image_features @ text_features.T).squeeze(1)
-    best_image_idx = (-similarities).argsort()
-    return [image_ids[i] for i in best_image_idx[:results_count]]
-
-
-
-
-# Function for image search
-def search(search_query, results_count=3):
-    image_features, image_ids = load_features_ids()
-    text_features = encode_search_query(search_query)
-    return find_best_matches(text_features, image_features, image_ids, results_count)
-
-
-
 snowflake_url = st.secrets.project_snowflake.url
+
 # role ######################
 wardrobe_list = annotations_list(snowflake_url)
 role = """
@@ -103,6 +49,64 @@ If any questions other than fashion are asked kindly reply in your words you are
 )
 Gender = "Men"
 
+
+
+
+# Load image features and image IDs from S3
+@st.cache_data
+def load_features_ids():
+    features_path_s3 = "features"
+
+    # Load the image IDs from S3
+    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'image_ids.csv')['Body'].read()
+    image_ids = pd.read_csv(BytesIO(image_ids_data))
+    image_ids = list(image_ids['image_id'])
+
+    # Load the features vectors from S3
+    features_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'features.npy')['Body'].read()
+    image_features = np.load(BytesIO(features_data))
+
+    if device == "cpu":
+        image_features = torch.from_numpy(image_features).float().to(device)
+    else:
+        image_features = torch.from_numpy(image_features).to(device)
+
+    return image_features, image_ids
+
+# Function to display images from S3
+@st.cache_resource
+def display_images_from_s3(image_ids):
+    columns = st.columns(3)
+    for j, image_id in enumerate(image_ids):
+        image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
+        image = Image.open(BytesIO(image_data))
+        columns[j].image(image, caption=f"Image {j+1}")
+
+
+# Function to encode search query
+@st.cache_data
+def encode_search_query(search_query):
+    with torch.no_grad():
+        text_encoded = model.encode_text(clip.tokenize(search_query).to(device))
+        text_encoded /= text_encoded.norm(dim=-1, keepdim=True)
+    return text_encoded
+
+# Function to find best matches
+
+def find_best_matches(text_features, image_features, image_ids, results_count=3):
+    similarities = (image_features @ text_features.T).squeeze(1)
+    best_image_idx = (-similarities).argsort()
+    return [image_ids[i] for i in best_image_idx[:results_count]]
+
+
+# Function for image search
+@st.cache_data()
+def search(search_query, results_count=3):
+    image_features, image_ids = load_features_ids()
+    text_features = encode_search_query(search_query)
+    return find_best_matches(text_features, image_features, image_ids, results_count)
+
+
 def main():
     st.sidebar.title("Chat")
     user_input = st.sidebar.text_area("Enter text:")
@@ -110,7 +114,7 @@ def main():
     if st.sidebar.button("Submit"):
         return user_input
 
-
+@st.cache_resource
 def interact_with_gpt(question, key, role=role):
     """
     Interacts with GPT-3.5 using the OpenAI API.
@@ -142,22 +146,11 @@ def interact_with_gpt(question, key, role=role):
     # Return the response
     return answer
 
-def disply_clip_image(search_query):
-    result_image_ids = search(search_query)
-
-    st.text(search_query)
-    columns = st.columns(3)
-    for j, image_id in enumerate(result_image_ids):
-        image = Image.open(f'D:/Projects/ADM Project Final/Wardrobe-Stylist/Data/{image_id}.jpg')
-        columns[j].image(image, caption=f"Image {j+1}")
-    
-
-
 if __name__ == "__main__":
     st.title("Stylist Opinion")
 
     # question ###################
-    openai_key = openai_key_input = st.sidebar.text_input("Enter your OpenAI Key :")
+    openai_key = st.sidebar.text_input("Enter your OpenAI Key :")
 
     question = main()
 
@@ -172,12 +165,12 @@ if __name__ == "__main__":
         response_json = json.loads(json.loads(response)['content'])
 
         st.write("Top Wear")
-        st.write(response_json['Top'])
+        #st.write(response_json['Top'])
         top_string = json.dumps(response_json['Top'])
         display_images_from_s3(search(top_string))
 
         st.write("Bottom Wear")
-        st.write(response_json['Bottom'])
+        #st.write(response_json['Bottom'])
         bottom_string = json.dumps(response_json['Bottom'])
         display_images_from_s3(search(bottom_string))
 
