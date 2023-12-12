@@ -24,18 +24,22 @@ s3_client = boto3.client(
     service_name=service_name,
     aws_access_key_id=aws_access_key_id,
     aws_secret_access_key=aws_secret_access_key,
-    region_name=region_name
+    region_name=region_name,
 )
 
 # Load image features and image IDs from S3
 def load_features_ids():
     features_path_s3 = "features"
 
-    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=f"{features_path_s3}/image_ids.csv")['Body'].read()
+    image_ids_data = s3_client.get_object(
+        Bucket=bucket_name, Key=f"{features_path_s3}/image_ids.csv"
+    )["Body"].read()
     image_ids = pd.read_csv(BytesIO(image_ids_data))
-    image_ids = list(image_ids['image_id'])
+    image_ids = list(image_ids["image_id"])
 
-    features_data = s3_client.get_object(Bucket=bucket_name, Key=f"{features_path_s3}/features.npy")['Body'].read()
+    features_data = s3_client.get_object(
+        Bucket=bucket_name, Key=f"{features_path_s3}/features.npy"
+    )["Body"].read()
     image_features = np.load(BytesIO(features_data))
 
     if device == "cpu":
@@ -45,14 +49,16 @@ def load_features_ids():
 
     return image_features, image_ids
 
+
 # Function to display images from S3
 def display_images_from_s3(image_ids):
     columns = st.columns(3)
     for j, image_id in enumerate(image_ids):
-        image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
+        image_data = s3_client.get_object(
+            Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg"
+        )["Body"].read()
         image = Image.open(BytesIO(image_data))
         columns[j].image(image, caption=f"Image {j+1}")
-
 
 
 # Load CLIP model
@@ -66,6 +72,7 @@ def encode_search_query(search_query):
         text_encoded /= text_encoded.norm(dim=-1, keepdim=True)
     return text_encoded
 
+
 # Function to find best matches
 def find_best_matches(text_features, image_features, image_ids, results_count=3):
     similarities = (image_features @ text_features.T).squeeze(1)
@@ -75,15 +82,15 @@ def find_best_matches(text_features, image_features, image_ids, results_count=3)
 
 # Load image features and image IDs
 def load_features_ids():
-    features_path = r"D:/Projects/ADM Project Final/Wardrobe-Stylist/features" 
+    features_path = r"D:/Projects/ADM Project Final/Wardrobe-Stylist/features"
     image_ids = pd.read_csv(f"{features_path}/image_ids.csv")
-    image_ids = list(image_ids['image_id'])
+    image_ids = list(image_ids["image_id"])
     image_features = np.load(f"{features_path}/features.npy")
     if device == "cpu":
         image_features = torch.from_numpy(image_features).float().to(device)
     else:
         image_features = torch.from_numpy(image_features).to(device)
-    
+
     return image_features, image_ids
 
 
@@ -92,7 +99,6 @@ def search(search_query, results_count=3):
     image_features, image_ids = load_features_ids()
     text_features = encode_search_query(search_query)
     return find_best_matches(text_features, image_features, image_ids, results_count)
-
 
 
 snowflake_url = st.secrets.project_snowflake.url
@@ -111,6 +117,7 @@ If any questions other than fashion are asked kindly reply in your words you are
     wardrobe_list="\n".join(wardrobe_list)
 )
 Gender = "Men"
+
 
 def main():
     st.sidebar.title("Chat")
@@ -151,15 +158,17 @@ def interact_with_gpt(question, key, role=role):
     # Return the response
     return answer
 
+
 def disply_clip_image(search_query):
     result_image_ids = search(search_query)
 
     st.text(search_query)
     columns = st.columns(3)
     for j, image_id in enumerate(result_image_ids):
-        image = Image.open(f'D:/Projects/ADM Project Final/Wardrobe-Stylist/Data/{image_id}.jpg')
+        image = Image.open(
+            f"D:/Projects/ADM Project Final/Wardrobe-Stylist/Data/{image_id}.jpg"
+        )
         columns[j].image(image, caption=f"Image {j+1}")
-    
 
 
 if __name__ == "__main__":
@@ -178,48 +187,58 @@ if __name__ == "__main__":
 
     else:
         response = interact_with_gpt(question=question, key=openai_key)
-        response_json = json.loads(json.loads(response)['content'])
+        response_json = json.loads(json.loads(response)["content"])
 
         st.write("Top Wear")
-        st.write(response_json['Top'])
-        top_string = json.dumps(response_json['Top'])
+        st.write(response_json["Top"])
+        top_string = json.dumps(response_json["Top"])
         display_images_from_s3(search(top_string))
 
         st.write("Bottom Wear")
-        st.write(response_json['Bottom'])
-        bottom_string = json.dumps(response_json['Bottom'])
+        st.write(response_json["Bottom"])
+        bottom_string = json.dumps(response_json["Bottom"])
         display_images_from_s3(search(bottom_string))
 
         st.write("Reason")
-        st.write(response_json['Reason'])
+        st.write(response_json["Reason"])
 
         # Recommendations
         st.header("Top Recommendations:")
-        top_recommendations = fetch_product_info(response_json['Top']['color'],
-                                                  response_json['Top']['clothing type'],
-                                                  "outerwear",
-                                                  response_json['Top']['pattern'],
-                                                  Gender)
+        top_recommendations = fetch_product_info(
+            response_json["Top"]["color"],
+            response_json["Top"]["clothing type"],
+            "outerwear",
+            response_json["Top"]["pattern"],
+            Gender,
+        )
         if top_recommendations:
             count = 1
             for product in top_recommendations:
-                st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
+                st.write(
+                    f"Product {count}: [link]"
+                    + "www.macys.com"
+                    + f"{product['product_url']}"
+                )
                 count = count + 1
         else:
             st.write("Error Retrieving Recommendations")
 
         st.header("Bottom Recommendations:")
-        Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
-                                                  response_json['Bottom']['clothing type'],
-                                                  response_json['Bottom']['pattern'],
-                                                  Gender)
-        
+        Bottom_recommendations = fetch_product_info(
+            response_json["Bottom"]["color"],
+            response_json["Bottom"]["clothing type"],
+            response_json["Bottom"]["pattern"],
+            Gender,
+        )
+
         if Bottom_recommendations:
             count = 1
             for product in Bottom_recommendations:
-                st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
+                st.write(
+                    f"Product {count}: [link]"
+                    + "www.macys.com"
+                    + f"{product['product_url']}"
+                )
                 count = count + 1
         else:
             st.write("Error Retrieving Recommendations")
-
-
