@@ -31,12 +31,15 @@ s3_client = boto3.client(
 def load_features_ids():
     features_path_s3 = "features"
 
-    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=f"{features_path_s3}/image_ids.csv")['Body'].read()
+    # Load the image IDs from S3
+    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'image_ids.csv')['Body'].read()
     image_ids = pd.read_csv(BytesIO(image_ids_data))
     image_ids = list(image_ids['image_id'])
 
-    features_data = s3_client.get_object(Bucket=bucket_name, Key=f"{features_path_s3}/features.npy")['Body'].read()
+    # Load the features vectors from S3
+    features_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'features.npy')['Body'].read()
     image_features = np.load(BytesIO(features_data))
+
 
     if device == "cpu":
         image_features = torch.from_numpy(image_features).float().to(device)
@@ -73,18 +76,6 @@ def find_best_matches(text_features, image_features, image_ids, results_count=3)
     return [image_ids[i] for i in best_image_idx[:results_count]]
 
 
-# Load image features and image IDs
-def load_features_ids():
-    features_path = r"D:/Projects/ADM Project Final/Wardrobe-Stylist/features" 
-    image_ids = pd.read_csv(f"{features_path}/image_ids.csv")
-    image_ids = list(image_ids['image_id'])
-    image_features = np.load(f"{features_path}/features.npy")
-    if device == "cpu":
-        image_features = torch.from_numpy(image_features).float().to(device)
-    else:
-        image_features = torch.from_numpy(image_features).to(device)
-    
-    return image_features, image_ids
 
 
 # Function for image search
