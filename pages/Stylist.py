@@ -84,7 +84,7 @@ def load_features_ids():
 # Function to display images from S3
 @st.cache_resource
 def display_images_from_s3(image_ids):
-    columns = st.columns(3)
+    columns = st.columns(2)
     for j, image_id in enumerate(image_ids):
         image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
         image = Image.open(BytesIO(image_data))
@@ -106,7 +106,7 @@ def find_best_matches(text_features, image_features, image_ids, results_count=3)
 
 # Function for image search
 @st.cache_data()
-def search(search_query, results_count=3):
+def search(search_query, results_count=2):
     image_features, image_ids = load_features_ids()
     text_features = encode_search_query(search_query)
     return find_best_matches(text_features, image_features, image_ids, results_count)
