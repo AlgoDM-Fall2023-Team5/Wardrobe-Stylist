@@ -58,7 +58,12 @@ If any questions other than fashion are asked kindly reply in your words you are
 """.format(
     wardrobe_list="\n".join(wardrobe_list)
 )
-Gender = "Men"
+
+st.title("Gender Selection")
+
+# Add a radio button for gender selection
+gender = st.radio("Select Gender", ["Men", "Women"])
+
 
 # Load image features and image IDs from S3
 @st.cache_data
