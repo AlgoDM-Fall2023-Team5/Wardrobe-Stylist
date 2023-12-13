@@ -75,6 +75,8 @@ def main():
             display_wardrobe(all_image_ids)
         else:
             display_wardrobe(None)
+    else:
+        st.header("Add your Images!")
 
     
 
