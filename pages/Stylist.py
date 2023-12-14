@@ -179,7 +179,7 @@ if __name__ == "__main__":
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
                 # display_images_from_s3(search(top_string))
-                response = requests.post("http://127.0.0.1:8000/image-search", json={"query": top_string})
+                response = requests.post("http://52.14.84.205/image-search", json={"query": top_string})
                 response.raise_for_status()  
                 result = response.json()
                 # Display the images returned by the FastAPI endpoint
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                response2 = requests.post("http://127.0.0.1:8000/image-search", json={"query": bottom_string})
+                response2 = requests.post("http://52.14.84.205/image-search", json={"query": bottom_string})
                 response2.raise_for_status()  
                 result2 = response2.json()
                 # Display the images returned by the FastAPI endpoint
