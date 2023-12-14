@@ -1,5 +1,6 @@
 import boto3
 import streamlit as st
+import botocore.exceptions
 
 #include [aws_credentials] in streamlit secrets######################
 
@@ -40,6 +41,21 @@ def display_wardrobe(all_image_ids):
         # Display the image in the current column
         current_column.image(image_bytes, caption=f'Image: {image_id}', use_column_width=True)
 
+folder_name = "Wardrobe"
+# Function to list images in the specified folder
+def list_images_in_folder(folder_name):
+    try:
+        objects = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)['Contents']
+        image_urls = [f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{obj['Key']}" for obj in objects]
+        return image_urls
+    except botocore.exceptions.NoCredentialsError:
+        st.error("AWS credentials not available.")
+        return []
+    except Exception as e:
+        st.error(f"Error listing images in folder: {e}")
+        return []
+
+
 def clear_screen():
     st.image([])
 
@@ -75,6 +91,20 @@ def main():
             display_wardrobe(all_image_ids)
         else:
             display_wardrobe(None)
+    else:
+        st.header("Add your Images!")
+        uploaded_file = st.file_uploader("Choose an image file to add", type=["jpg", "jpeg", "png"])
+        if uploaded_file:
+            if st.button("Add Image"):
+                try:
+                    object_key = f"{folder_name}/{uploaded_file.name}"
+                    s3_client.upload_fileobj(uploaded_file, bucket_name, object_key)
+                    st.success(f"Image {uploaded_file.name} added successfully!")
+                except botocore.exceptions.NoCredentialsError:
+                    st.error("AWS credentials not available.")
+                except Exception as e:
+                    st.error(f"Error adding image: {e}")
+
 
     
 

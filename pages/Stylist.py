@@ -118,7 +118,7 @@ def search(search_query, results_count=2):
 
 def main():
     st.sidebar.title("Chat")
-    user_input = st.sidebar.text_area("Enter text:")
+    user_input = st.sidebar.text_area("Enter text to Transform Your Event Look!:")
 
     if st.sidebar.button("Submit"):
         return user_input
