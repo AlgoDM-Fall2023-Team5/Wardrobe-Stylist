@@ -13,12 +13,6 @@ from macys_items import fetch_product_info
 from sqlalchemy import create_engine
 import requests
 
-# Load CLIP model
-try:
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model= clip.load("ViT-B/32", device=device)[0]
-except Exception as e:
-    st.error(f"Error loading CLIP model: {str(e)}")
 
 # Collect AWS secrets
 try:
@@ -61,27 +55,6 @@ If any questions other than fashion are asked kindly reply in your words you are
 )
 Gender = "Men"
 
-# Load image features and image IDs from S3
-
-def load_features_ids():
-    features_path_s3 = "features"
-
-    # Load the image IDs from S3
-    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'image_ids.csv')['Body'].read()
-    image_ids = pd.read_csv(BytesIO(image_ids_data))
-    image_ids = list(image_ids['image_id'])
-
-    # Load the features vectors from S3
-    features_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'features.npy')['Body'].read()
-    image_features = np.load(BytesIO(features_data))
-
-    if device == "cpu":
-        image_features = torch.from_numpy(image_features).float().to(device)
-    else:
-        image_features = torch.from_numpy(image_features).to(device)
-
-    return image_features, image_ids
-
 # Function to display images from S3
 
 def display_images_from_s3(image_ids):
@@ -91,26 +64,6 @@ def display_images_from_s3(image_ids):
         image = Image.open(BytesIO(image_data))
         columns[j].image(image, caption=f"Image {j+1}")
 
-# Function to encode search query
-
-def encode_search_query(search_query):
-    with torch.no_grad():
-        text_encoded = model.encode_text(clip.tokenize(search_query).to(device))
-        text_encoded /= text_encoded.norm(dim=-1, keepdim=True)
-    return text_encoded
-
-# Function to find best matches
-def find_best_matches(text_features, image_features, image_ids, results_count=3):
-    similarities = (image_features @ text_features.T).squeeze(1)
-    best_image_idx = (-similarities).argsort()
-    return [image_ids[i] for i in best_image_idx[:results_count]]
-
-# Function for image search
-
-def search(search_query, results_count=3):
-    image_features, image_ids = load_features_ids()
-    text_features = encode_search_query(search_query)
-    return find_best_matches(text_features, image_features, image_ids, results_count)
 
 def main():
     st.sidebar.title("Chat")
