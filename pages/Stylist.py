@@ -58,8 +58,8 @@ If any questions other than fashion are asked kindly reply in your words you are
 """.format(
     wardrobe_list="\n".join(wardrobe_list)
 )
+Gender = "Men"
 
-Gender="Men"
 # Load image features and image IDs from S3
 
 def load_features_ids():
@@ -84,7 +84,7 @@ def load_features_ids():
 # Function to display images from S3
 
 def display_images_from_s3(image_ids):
-    columns = st.columns(2)
+    columns = st.columns(3)
     for j, image_id in enumerate(image_ids):
         image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
         image = Image.open(BytesIO(image_data))
