@@ -11,6 +11,7 @@ import boto3
 from snowflake_list import annotations_list
 from macys_items import fetch_product_info
 from sqlalchemy import create_engine
+import requests
 
 # Load CLIP model
 try:
@@ -177,7 +178,19 @@ if __name__ == "__main__":
 
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
-                display_images_from_s3(search(top_string))
+                # display_images_from_s3(search(top_string))
+                st.write(top_string)
+                response = requests.post("http://127.0.0.1:8000/image-search", json={"query": top_string})
+                response.raise_for_status()  
+                result = response.json()
+                st.write(result)
+
+
+
+                # Display the images returned by the FastAPI endpoint
+                # display_images_from_s3(result['image_ids'])
+
+
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
