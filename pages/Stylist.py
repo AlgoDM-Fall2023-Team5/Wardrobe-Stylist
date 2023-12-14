@@ -59,7 +59,7 @@ If any questions other than fashion are asked kindly reply in your words you are
     wardrobe_list="\n".join(wardrobe_list)
 )
 
-
+Gender="Men"
 # Load image features and image IDs from S3
 
 def load_features_ids():
