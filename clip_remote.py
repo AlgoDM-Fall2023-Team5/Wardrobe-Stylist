@@ -78,14 +78,14 @@ def encode_search_query(search_query):
     return text_encoded
 
 # Function to find best matches
-def find_best_matches(text_features, image_features, image_ids, results_count=3):
+def find_best_matches(text_features, image_features, image_ids, results_count=2):
     similarities = (image_features @ text_features.T).squeeze(1)
     best_image_idx = (-similarities).argsort()
     return [image_ids[i] for i in best_image_idx[:results_count]]
 
 # Function for image search
 
-def search(search_query, results_count=3):
+def search(search_query, results_count=2):
     image_features, image_ids = load_features_ids()
     text_features = encode_search_query(search_query)
     return find_best_matches(text_features, image_features, image_ids, results_count)
@@ -104,9 +104,8 @@ def search(search_query, results_count=3):
 def image_search(query: dict):
     try:
         print(query)
-        results = search(query)
-        return results
-# {"image_ids": results}
+        results = search(str(query))
+        return {"image_ids": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

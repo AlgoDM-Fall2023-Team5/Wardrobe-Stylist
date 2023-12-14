@@ -85,7 +85,7 @@ def load_features_ids():
 # Function to display images from S3
 
 def display_images_from_s3(image_ids):
-    columns = st.columns(3)
+    columns = st.columns(2)
     for j, image_id in enumerate(image_ids):
         image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
         image = Image.open(BytesIO(image_data))
@@ -179,22 +179,22 @@ if __name__ == "__main__":
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
                 # display_images_from_s3(search(top_string))
-                st.write(top_string)
                 response = requests.post("http://127.0.0.1:8000/image-search", json={"query": top_string})
                 response.raise_for_status()  
                 result = response.json()
-                st.write(result)
-
-
-
                 # Display the images returned by the FastAPI endpoint
-                # display_images_from_s3(result['image_ids'])
+                display_images_from_s3(result['image_ids'])
 
 
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                display_images_from_s3(search(bottom_string))
+                response2 = requests.post("http://127.0.0.1:8000/image-search", json={"query": bottom_string})
+                response2.raise_for_status()  
+                result2 = response2.json()
+                # Display the images returned by the FastAPI endpoint
+                display_images_from_s3(result2['image_ids'])
+
 
                 st.write("Reason")
                 st.write(response_json['Reason'])
