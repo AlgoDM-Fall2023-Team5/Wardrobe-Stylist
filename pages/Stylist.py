@@ -61,7 +61,7 @@ If any questions other than fashion are asked kindly reply in your words you are
 Gender = "Men"
 
 # Load image features and image IDs from S3
-@st.cache_data
+
 def load_features_ids():
     features_path_s3 = "features"
 
@@ -82,7 +82,7 @@ def load_features_ids():
     return image_features, image_ids
 
 # Function to display images from S3
-@st.cache_resource
+
 def display_images_from_s3(image_ids):
     columns = st.columns(3)
     for j, image_id in enumerate(image_ids):
@@ -91,7 +91,7 @@ def display_images_from_s3(image_ids):
         columns[j].image(image, caption=f"Image {j+1}")
 
 # Function to encode search query
-@st.cache_data
+
 def encode_search_query(search_query):
     with torch.no_grad():
         text_encoded = model.encode_text(clip.tokenize(search_query).to(device))
@@ -105,7 +105,7 @@ def find_best_matches(text_features, image_features, image_ids, results_count=3)
     return [image_ids[i] for i in best_image_idx[:results_count]]
 
 # Function for image search
-@st.cache_data()
+
 def search(search_query, results_count=3):
     image_features, image_ids = load_features_ids()
     text_features = encode_search_query(search_query)
@@ -118,7 +118,7 @@ def main():
     if st.sidebar.button("Submit"):
         return user_input
 
-@st.cache_resource
+
 def interact_with_gpt(question, key, role=role):
     """
     Interacts with GPT-3.5 using the OpenAI API.
