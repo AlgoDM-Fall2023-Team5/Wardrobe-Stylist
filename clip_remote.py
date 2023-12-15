@@ -13,9 +13,17 @@ from typing import List
 from pydantic import BaseModel
 import uvicorn
 import io
+from fastapi.responses import JSONResponse
+import requests
+from bs4 import BeautifulSoup
+import time
+
 
 app = FastAPI()
 
+class ProductInfo(BaseModel):
+    image_url: str
+    product_url: str
 
 # Load CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -68,6 +76,51 @@ def load_features_ids():
 
     return image_features, image_ids
 
+def fetch_product_info(keywords):
+    print(keywords)
+    base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(keywords)
+
+    headers = {
+        # 'authority': 'www.macys.com',
+        # 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,/;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        # 'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+    }
+
+    # Send a request to get the product information
+    response = requests.get(base_url, headers=headers)
+    
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Extract product containers
+        product_containers = soup.find_all('div', class_='productThumbnail')
+
+        # Create a list to store product information
+        products = []
+
+        for container in product_containers:
+            # Extract image URL
+            img_element = container.find('img', class_='thumbnailImage')
+            image_url = img_element['src'] if img_element and 'src' in img_element.attrs else None
+
+            # Extract product URL
+            product_url_element = container.find('a', class_='productDescLink')
+            product_url = product_url_element['href'] if product_url_element else None
+
+            if image_url and product_url:
+                products.append({
+                    'image_url': image_url,
+                    'product_url': product_url
+                })
+
+        time.sleep(2)
+
+        return products
+
+    else:
+        print(f"Failed to fetch data. Status code: {response.status_code}")
+        return None
 
 # Function to encode search query
 
@@ -108,6 +161,19 @@ def image_search(query: dict):
         return {"image_ids": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/get_product_info")
+async def get_product_info(data: dict):
+    keywords = data.values()
+    result = fetch_product_info(keywords)
+
+    if result:
+       return result
+
+
+    return JSONResponse(content={"message": "Failed to fetch data"}, status_code=500)
+
 
 if __name__ == "__main__":
     import uvicorn
