@@ -2,15 +2,10 @@ import streamlit as st
 from openai import OpenAI
 import json
 from PIL import Image
-import torch
-import clip
-import numpy as np
-import pandas as pd
 from io import BytesIO
 import boto3
 from snowflake_list import annotations_list
 from macys_items import fetch_product_info
-from sqlalchemy import create_engine
 import requests
 
 
@@ -132,7 +127,7 @@ if __name__ == "__main__":
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
                 # display_images_from_s3(search(top_string))
-                response = requests.post("http://52.14.84.205/image-search", json={"query": top_string})
+                response = requests.post("http://3.133.150.2/image-search", json={"query": top_string})
                 response.raise_for_status()  
                 result = response.json()
                 # Display the images returned by the FastAPI endpoint
@@ -142,7 +137,7 @@ if __name__ == "__main__":
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                response2 = requests.post("http://52.14.84.205/image-search", json={"query": bottom_string})
+                response2 = requests.post("http://3.133.150.2/image-search", json={"query": bottom_string})
                 response2.raise_for_status()  
                 result2 = response2.json()
                 # Display the images returned by the FastAPI endpoint
