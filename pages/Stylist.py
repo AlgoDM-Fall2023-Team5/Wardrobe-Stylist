@@ -10,9 +10,9 @@ import requests
 
 # http://127.0.0.1:8000
 # http://3.133.150.2/
-url_clip="http://127.0.0.1:8000/image-search"
+url_clip="http://3.133.150.2/image-search"
 
-url_product="http://127.0.0.1:8000/get_product_info"
+url_product="https://97ea-2601-19b-d81-6a0-d165-7c21-9710-fc51.ngrok.io/get_product_info"
 # Collect AWS secrets
 try:
     bucket_name = st.secrets.aws_credentials.bucket_name
