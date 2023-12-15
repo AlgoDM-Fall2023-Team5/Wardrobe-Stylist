@@ -2,17 +2,23 @@ import streamlit as st
 from openai import OpenAI
 import json
 from PIL import Image
+import torch
+import clip
+import numpy as np
+import pandas as pd
 from io import BytesIO
 import boto3
 from snowflake_list import annotations_list
 from macys_items import fetch_product_info
-import requests
+from sqlalchemy import create_engine
 
-# http://127.0.0.1:8000
-# http://3.133.150.2/
-url_clip="http://3.133.150.2/image-search"
+# Load CLIP model
+try:
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model= clip.load("ViT-B/32", device=device)[0]
+except Exception as e:
+    st.error(f"Error loading CLIP model: {str(e)}")
 
-url_product="https://97ea-2601-19b-d81-6a0-d165-7c21-9710-fc51.ngrok.io/get_product_info"
 # Collect AWS secrets
 try:
     bucket_name = st.secrets.aws_credentials.bucket_name
@@ -54,24 +60,65 @@ If any questions other than fashion are asked kindly reply in your words you are
 )
 Gender = "Men"
 
-# Function to display images from S3
+# Load image features and image IDs from S3
+@st.cache_data
+def load_features_ids():
+    features_path_s3 = "features"
 
+    # Load the image IDs from S3
+    image_ids_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'image_ids.csv')['Body'].read()
+    image_ids = pd.read_csv(BytesIO(image_ids_data))
+    image_ids = list(image_ids['image_id'])
+
+    # Load the features vectors from S3
+    features_data = s3_client.get_object(Bucket=bucket_name, Key=features_path_s3 + 'features.npy')['Body'].read()
+    image_features = np.load(BytesIO(features_data))
+
+    if device == "cpu":
+        image_features = torch.from_numpy(image_features).float().to(device)
+    else:
+        image_features = torch.from_numpy(image_features).to(device)
+
+    return image_features, image_ids
+
+# Function to display images from S3
+@st.cache_resource
 def display_images_from_s3(image_ids):
-    columns = st.columns(2)
+    columns = st.columns(3)
     for j, image_id in enumerate(image_ids):
         image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
         image = Image.open(BytesIO(image_data))
         columns[j].image(image, caption=f"Image {j+1}")
 
+# Function to encode search query
+@st.cache_data
+def encode_search_query(search_query):
+    with torch.no_grad():
+        text_encoded = model.encode_text(clip.tokenize(search_query).to(device))
+        text_encoded /= text_encoded.norm(dim=-1, keepdim=True)
+    return text_encoded
+
+# Function to find best matches
+def find_best_matches(text_features, image_features, image_ids, results_count=3):
+    similarities = (image_features @ text_features.T).squeeze(1)
+    best_image_idx = (-similarities).argsort()
+    return [image_ids[i] for i in best_image_idx[:results_count]]
+
+# Function for image search
+@st.cache_data()
+def search(search_query, results_count=3):
+    image_features, image_ids = load_features_ids()
+    text_features = encode_search_query(search_query)
+    return find_best_matches(text_features, image_features, image_ids, results_count)
 
 def main():
     st.sidebar.title("Chat")
-    user_input = st.sidebar.text_area("Enter text to Transform Your Event Look!:")
+    user_input = st.sidebar.text_area("Enter text:")
 
     if st.sidebar.button("Submit"):
         return user_input
 
-
+@st.cache_resource
 def interact_with_gpt(question, key, role=role):
     """
     Interacts with GPT-3.5 using the OpenAI API.
@@ -130,126 +177,44 @@ if __name__ == "__main__":
 
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
-                # display_images_from_s3(search(top_string))
-                response = requests.post( url_clip, json={"query": top_string})
-                response.raise_for_status()  
-                result = response.json()
-                # Display the images returned by the FastAPI endpoint
-                display_images_from_s3(result['image_ids'])
-
-
+                display_images_from_s3(search(top_string))
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                response2 = requests.post(url_clip, json={"query": bottom_string})
-                response2.raise_for_status()  
-                result2 = response2.json()
-                # Display the images returned by the FastAPI endpoint
-                display_images_from_s3(result2['image_ids'])
-
+                display_images_from_s3(search(bottom_string))
 
                 st.write("Reason")
                 st.write(response_json['Reason'])
 
                 # Recommendations
                 st.header("Top Recommendations:")
-                url_top = [response_json['Top']['color'],
-                                                            response_json['Top']['clothing type'],
-                                                            response_json['Top']['pattern'],
-                                                            Gender]
-                color = response_json['Top']['color']
-                clothing_type = response_json['Top']['clothing type']
-                pattern = response_json['Top']['pattern']
-
-                data = [color,clothing_type,pattern,Gender]
-                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
-                print({"urls": url_top})
-                try:
-                    response = requests.post(url_product, params={"base_url":base_url})
-                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
-                    Top_recommendations = response.json()
+                top_recommendations = fetch_product_info(response_json['Top']['color'],
+                                                          response_json['Top']['clothing type'],
+                                                          "outerwear",
+                                                          response_json['Top']['pattern'],
+                                                          Gender)
+                if top_recommendations:
                     count = 1
                     for product in top_recommendations:
                         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
                         count = count + 1
-                        # product["image_url"]
-
-                
-                except requests.exceptions.RequestException as e:
-                    print(f"Error fetching products: {e}")
-
-
+                else:
+                    st.write("Error Retrieving Recommendations")
 
                 st.header("Bottom Recommendations:")
-
-                # bottom_data = {
-                #     "keywords": [
-                #         response_json['Bottom']['color'],
-                #         response_json['Bottom']['clothing type'],
-                #         response_json['Bottom']['pattern'],
-                #         Gender
-                #     ]
-                # }
-
-            payload = {
-            "color": response_json['Bottom']['color'],
-            "clothing_type": response_json['Bottom']['clothing type'],
-            "pattern": response_json['Bottom']['pattern'],
-            "gender": Gender
-        }
-
-            # Send a POST request with the payload
-            response = requests.post(base_url_recommend, json={"data":payload})
-            if response.status_code == 200:
-                st.write(response)
-                # count = 1
-                # for product in response:
-                #     st.write(f"Product {count}: [link]" + "www.macys.com" + f"{response}")
-                #     count = count + 1
-
-            else:
-                print(f"Failed to get bottom recommendations. Status code: {response.status_code}")
-                bottom_recommendations = None
-
-
-
-
-
-                # Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
-                #                                             response_json['Bottom']['clothing type'],
-                #                                             response_json['Bottom']['pattern'],
-                #                                             Gender)
-
-                # Bottom_recommendations = None
-
-                url_bottom = [response_json['Bottom']['color'],
+                Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
                                                             response_json['Bottom']['clothing type'],
                                                             response_json['Bottom']['pattern'],
-                                                            Gender]
-                color = response_json['Bottom']['color']
-                clothing_type = response_json['Bottom']['clothing type']
-                pattern = response_json['Bottom']['pattern']
+                                                            Gender)
 
-                data = [color,clothing_type,pattern,Gender]
-                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
-                print({"urls": url_bottom})
-                try:
-                    response = requests.post(url_product, params={"base_url":base_url})
-                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
-                    Bottom_recommendations = response.json()
+                if Bottom_recommendations:
                     count = 1
-                    for product in Bottom_recommendations["products"]:
+                    for product in Bottom_recommendations:
                         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
                         count = count + 1
-                        # product["image_url"]
-
-                
-                except requests.exceptions.RequestException as e:
-                    print(f"Error fetching products: {e}")
-
-
-                    
-
+                else:
+                    st.write("Error Retrieving Recommendations")
 
     except Exception as e:
         st.error(f"Please Enter Valid Input or Try Again.An unexpected error occurred: {str(e)}")
+        
