@@ -173,8 +173,8 @@ if __name__ == "__main__":
                     for product in Bottom_recommendations:
                         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
                         count = count + 1
-                else:
-                    st.write("Error Retrieving Recommendations")
+                # else:
+                    # st.write("Error Retrieving Recommendations")
 
     except Exception as e:
         st.error(f"Please Enter Valid Input or Try Again.An unexpected error occurred: {str(e)}")
