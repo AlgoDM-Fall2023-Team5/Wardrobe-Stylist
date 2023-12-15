@@ -12,7 +12,7 @@ import requests
 # http://3.133.150.2/
 url_clip="http://3.133.150.2/image-search"
 
-url_product="https://3bc0-2601-19b-d80-8790-f9e1-44e6-79da-3b61.ngrok.io/get_product_info"
+# url_product="https://3bc0-2601-19b-d80-8790-f9e1-44e6-79da-3b61.ngrok.io/get_product_info"
 # Collect AW https://97ea-2601-19b-d81-6a0-d165-7c21-9710-fc51.ngrok.io
 try:
     bucket_name = st.secrets.aws_credentials.bucket_name
@@ -114,6 +114,10 @@ if __name__ == "__main__":
     try:
         # question ###################
         openai_key = st.sidebar.text_input("Enter your OpenAI Key :")
+        Recommneder_service = st.sidebar.text_input("Enter Recommender Service URL")
+        url_product = str(Recommneder_service) + "/get_product_info"
+
+        
 
         question = main()
 
