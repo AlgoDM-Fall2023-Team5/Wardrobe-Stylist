@@ -165,14 +165,17 @@ def image_search(query: dict):
 
 @app.post("/get_product_info")
 async def get_product_info(data: dict):
-    keywords = data.values()
-    result = fetch_product_info(keywords)
+    # keywords = data.values()
+    result = fetch_product_info(list(data))
 
     if result:
-       return result
+       return {"products": result}
 
 
     return JSONResponse(content={"message": "Failed to fetch data"}, status_code=500)
+
+
+
 
 
 if __name__ == "__main__":

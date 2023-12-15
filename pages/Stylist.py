@@ -2,15 +2,10 @@ import streamlit as st
 from openai import OpenAI
 import json
 from PIL import Image
-import torch
-import clip
-import numpy as np
-import pandas as pd
 from io import BytesIO
 import boto3
 from snowflake_list import annotations_list
 from macys_items import fetch_product_info
-from sqlalchemy import create_engine
 import requests
 
 
@@ -132,7 +127,7 @@ if __name__ == "__main__":
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
                 # display_images_from_s3(search(top_string))
-                response = requests.post("http://52.14.84.205/image-search", json={"query": top_string})
+                response = requests.post("http://127.0.0.1:8000/image-search", json={"query": top_string})
                 response.raise_for_status()  
                 result = response.json()
                 # Display the images returned by the FastAPI endpoint
@@ -142,7 +137,7 @@ if __name__ == "__main__":
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                response2 = requests.post("http://52.14.84.205/image-search", json={"query": bottom_string})
+                response2 = requests.post("http://127.0.0.1:8000/image-search", json={"query": bottom_string})
                 response2.raise_for_status()  
                 result2 = response2.json()
                 # Display the images returned by the FastAPI endpoint
@@ -154,32 +149,57 @@ if __name__ == "__main__":
 
                 # Recommendations
                 st.header("Top Recommendations:")
-                top_recommendations = fetch_product_info(response_json['Top']['color'],
-                                                          response_json['Top']['clothing type'],
-                                                          "outerwear",
-                                                          response_json['Top']['pattern'],
-                                                          Gender)
-                if top_recommendations:
+                url_top = [response_json['Top']['color'],
+                                                            response_json['Top']['clothing type'],
+                                                            response_json['Top']['pattern'],
+                                                            Gender]
+                
+
+                try:
+                    response = requests.post("http://127.0.0.1:8000/get_product_info", json={"urls": url_top})
+                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+                    Top_recommendations = response.json()
                     count = 1
-                    for product in top_recommendations:
+                    for product in Top_recommendations["products"]:
                         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
                         count = count + 1
-                else:
-                    st.write("Error Retrieving Recommendations")
+                        # product["image_url"]
+
+                
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching products: {e}")
 
                 st.header("Bottom Recommendations:")
-                Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
+                # Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
+                #                                             response_json['Bottom']['clothing type'],
+                #                                             response_json['Bottom']['pattern'],
+                #                                             Gender)
+
+                # Bottom_recommendations = None
+
+                url_bottom = [response_json['Bottom']['color'],
                                                             response_json['Bottom']['clothing type'],
                                                             response_json['Bottom']['pattern'],
-                                                            Gender)
+                                                            Gender]
+                
 
-                if Bottom_recommendations:
+                try:
+                    response = requests.post("http://127.0.0.1:8000/get_product_info", json={"urls": url_bottom})
+                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+                    Bottom_recommendations = response.json()
                     count = 1
-                    for product in Bottom_recommendations:
+                    for product in Bottom_recommendations["products"]:
                         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
                         count = count + 1
-                else:
-                    st.write("Error Retrieving Recommendations")
+                        # product["image_url"]
+
+                
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching products: {e}")
+
+
+                    
+
 
     except Exception as e:
         st.error(f"Please Enter Valid Input or Try Again.An unexpected error occurred: {str(e)}")
