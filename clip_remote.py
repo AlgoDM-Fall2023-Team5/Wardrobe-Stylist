@@ -31,11 +31,12 @@ model= clip.load("ViT-B/32", device=device)[0]
 
 
 # Collect AWS secrets
-bucket_name = "team5adm"
-service_name = 's3'
-aws_access_key_id = 'AKIAQ4WOK7VQVKP4WJVB'
-aws_secret_access_key = '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'
-region_name = 'us-east-2'
+bucket_name = st.secrets.aws_credentials.bucket_name
+service_name = st.secrets.aws_credentials.service_name
+aws_access_key_id = st.secrets.aws_credentials.aws_access_key_id
+aws_secret_access_key = st.secrets.aws_credentials.aws_secret_access_key
+region_name = st.secrets.aws_credentials.region_name
+
 
 # S3 client setup
 s3_client = boto3.client(
@@ -48,7 +49,7 @@ s3_client = boto3.client(
 
 
 # role ######################
-snowflake_url = "snowflake://shirish:Northeastern123@PXTNTMC-FTB58373/CLOTHING_TAGS/PUBLIC?warehouse=COMPUTE_WH&role=ACCOUNTADMIN"
+snowflake_url = st.secrets.project_snowflake.url
 wardrobe_list = annotations_list(snowflake_url)
 
 
