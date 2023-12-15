@@ -31,11 +31,11 @@ model= clip.load("ViT-B/32", device=device)[0]
 
 
 # Collect AWS secrets
-bucket_name = st.secrets.aws_credentials.bucket_name
-service_name = st.secrets.aws_credentials.service_name
-aws_access_key_id = st.secrets.aws_credentials.aws_access_key_id
-aws_secret_access_key = st.secrets.aws_credentials.aws_secret_access_key
-region_name = st.secrets.aws_credentials.region_name
+bucket_name = "team5adm"
+service_name = 's3'
+aws_access_key_id = 'AKIAQ4WOK7VQVKP4WJVB'
+aws_secret_access_key = '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'
+region_name = 'us-east-2'
 
 # S3 client setup
 s3_client = boto3.client(
@@ -48,7 +48,7 @@ s3_client = boto3.client(
 
 
 # role ######################
-snowflake_url = st.secrets.project_snowflake.url
+snowflake_url = "snowflake://shirish:Northeastern123@PXTNTMC-FTB58373/CLOTHING_TAGS/PUBLIC?warehouse=COMPUTE_WH&role=ACCOUNTADMIN"
 wardrobe_list = annotations_list(snowflake_url)
 
 
@@ -143,14 +143,6 @@ def search(search_query, results_count=2):
     text_features = encode_search_query(search_query)
     return find_best_matches(text_features, image_features, image_ids, results_count)
 
-
-# Function to display images from S3
-# def display_images_from_s3(image_ids):
-#     columns = st.columns(3)
-#     for j, image_id in enumerate(image_ids):
-#         image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
-#         image = Image.open(BytesIO(image_data))
-#         columns[j].image(image, caption=f"Image {j+1}")
 
 
 @app.post("/image-search")
