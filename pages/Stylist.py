@@ -9,6 +9,9 @@ from macys_items import fetch_product_info
 import requests
 
 
+url_clip="http://3.133.150.2/image-search"
+
+url_product="http://3.133.150.2/get_product_info"
 # Collect AWS secrets
 try:
     bucket_name = st.secrets.aws_credentials.bucket_name
@@ -127,7 +130,7 @@ if __name__ == "__main__":
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
                 # display_images_from_s3(search(top_string))
-                response = requests.post("http://127.0.0.1:8000/image-search", json={"query": top_string})
+                response = requests.post( url_clip, json={"query": top_string})
                 response.raise_for_status()  
                 result = response.json()
                 # Display the images returned by the FastAPI endpoint
@@ -137,7 +140,7 @@ if __name__ == "__main__":
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                response2 = requests.post("http://127.0.0.1:8000/image-search", json={"query": bottom_string})
+                response2 = requests.post(url_clip, json={"query": bottom_string})
                 response2.raise_for_status()  
                 result2 = response2.json()
                 # Display the images returned by the FastAPI endpoint
@@ -156,7 +159,7 @@ if __name__ == "__main__":
                 
 
                 try:
-                    response = requests.post("http://127.0.0.1:8000/get_product_info", json={"urls": url_top})
+                    response = requests.post(url_product, json={"urls": url_top})
                     response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
                     Top_recommendations = response.json()
                     count = 1
@@ -184,7 +187,7 @@ if __name__ == "__main__":
                 
 
                 try:
-                    response = requests.post("http://127.0.0.1:8000/get_product_info", json={"urls": url_bottom})
+                    response = requests.post(url_product, json={"urls": url_bottom})
                     response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
                     Bottom_recommendations = response.json()
                     count = 1
