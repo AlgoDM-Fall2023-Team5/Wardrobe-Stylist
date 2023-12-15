@@ -8,8 +8,11 @@ from snowflake_list import annotations_list
 from macys_items import fetch_product_info
 import requests
 
-base_url_image = "http://127.0.0.1:8000/image-search"
-base_url_recommend = "http://127.0.0.1:8000/get_product_info"
+# http://127.0.0.1:8000
+# http://3.133.150.2/
+url_clip="http://3.133.150.2/image-search"
+
+url_product="https://97ea-2601-19b-d81-6a0-d165-7c21-9710-fc51.ngrok.io/get_product_info"
 # Collect AWS secrets
 try:
     bucket_name = st.secrets.aws_credentials.bucket_name
@@ -128,7 +131,7 @@ if __name__ == "__main__":
                 st.write("Top Wear")
                 top_string = json.dumps(response_json['Top'])
                 # display_images_from_s3(search(top_string))
-                response = requests.post("http://127.0.0.1:8000/image-search", json={"query": top_string})
+                response = requests.post( url_clip, json={"query": top_string})
                 response.raise_for_status()  
                 result = response.json()
                 # Display the images returned by the FastAPI endpoint
@@ -138,7 +141,7 @@ if __name__ == "__main__":
 
                 st.write("Bottom Wear")
                 bottom_string = json.dumps(response_json['Bottom'])
-                response2 = requests.post(" http://127.0.0.1:8000/image-search", json={"query": bottom_string})
+                response2 = requests.post(url_clip, json={"query": bottom_string})
                 response2.raise_for_status()  
                 result2 = response2.json()
                 # Display the images returned by the FastAPI endpoint
@@ -150,18 +153,32 @@ if __name__ == "__main__":
 
                 # Recommendations
                 st.header("Top Recommendations:")
-                top_recommendations = fetch_product_info(response_json['Top']['color'],
-                                                          response_json['Top']['clothing type'],
-                                                          "outerwear",
-                                                          response_json['Top']['pattern'],
-                                                          Gender)
-                if top_recommendations:
+                url_top = [response_json['Top']['color'],
+                                                            response_json['Top']['clothing type'],
+                                                            response_json['Top']['pattern'],
+                                                            Gender]
+                color = response_json['Top']['color']
+                clothing_type = response_json['Top']['clothing type']
+                pattern = response_json['Top']['pattern']
+
+                data = [color,clothing_type,pattern,Gender]
+                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
+                print({"urls": url_top})
+                try:
+                    response = requests.post(url_product, params={"base_url":base_url})
+                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+                    Top_recommendations = response.json()
                     count = 1
                     for product in top_recommendations:
                         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
                         count = count + 1
-                else:
-                    st.write("Error Retrieving Recommendations")
+                        # product["image_url"]
+
+                
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching products: {e}")
+
+
 
                 st.header("Bottom Recommendations:")
 
@@ -202,15 +219,37 @@ if __name__ == "__main__":
                 #                                             response_json['Bottom']['clothing type'],
                 #                                             response_json['Bottom']['pattern'],
                 #                                             Gender)
-                # st.write(Bottom_recommendations)
 
-                # if Bottom_recommendations:
-                #     count = 1
-                #     for product in Bottom_recommendations:
-                #         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
-                #         count = count + 1
-                # else:
-                #     st.write("Error Retrieving Recommendations")
+                # Bottom_recommendations = None
+
+                url_bottom = [response_json['Bottom']['color'],
+                                                            response_json['Bottom']['clothing type'],
+                                                            response_json['Bottom']['pattern'],
+                                                            Gender]
+                color = response_json['Bottom']['color']
+                clothing_type = response_json['Bottom']['clothing type']
+                pattern = response_json['Bottom']['pattern']
+
+                data = [color,clothing_type,pattern,Gender]
+                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
+                print({"urls": url_bottom})
+                try:
+                    response = requests.post(url_product, params={"base_url":base_url})
+                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+                    Bottom_recommendations = response.json()
+                    count = 1
+                    for product in Bottom_recommendations["products"]:
+                        st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
+                        count = count + 1
+                        # product["image_url"]
+
+                
+                except requests.exceptions.RequestException as e:
+                    print(f"Error fetching products: {e}")
+
+
+                    
+
 
     except Exception as e:
         st.error(f"Please Enter Valid Input or Try Again.An unexpected error occurred: {str(e)}")

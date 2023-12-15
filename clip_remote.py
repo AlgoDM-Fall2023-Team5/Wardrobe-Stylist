@@ -37,6 +37,7 @@ aws_access_key_id = st.secrets.aws_credentials.aws_access_key_id
 aws_secret_access_key = st.secrets.aws_credentials.aws_secret_access_key
 region_name = st.secrets.aws_credentials.region_name
 
+
 # S3 client setup
 s3_client = boto3.client(
     service_name=service_name,
@@ -76,9 +77,9 @@ def load_features_ids():
 
     return image_features, image_ids
 
-def fetch_product_info(keywords):
-    print(keywords)
-    base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(keywords)
+def fetch_product_info(base_url):
+    # print(keywords)
+    
 
     headers = {
         # 'authority': 'www.macys.com',
@@ -144,14 +145,6 @@ def search(search_query, results_count=2):
     return find_best_matches(text_features, image_features, image_ids, results_count)
 
 
-# Function to display images from S3
-# def display_images_from_s3(image_ids):
-#     columns = st.columns(3)
-#     for j, image_id in enumerate(image_ids):
-#         image_data = s3_client.get_object(Bucket=bucket_name, Key=f"Wardrobe/{image_id}.jpg")['Body'].read()
-#         image = Image.open(BytesIO(image_data))
-#         columns[j].image(image, caption=f"Image {j+1}")
-
 
 @app.post("/image-search")
 def image_search(query: dict):
@@ -163,10 +156,13 @@ def image_search(query: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+
 @app.post("/get_product_info")
-async def get_product_info(data: dict):
+async def get_product_info(base_url:str):
     # keywords = data.values()
-    result = fetch_product_info(list(data))
+    
+    result = fetch_product_info(base_url)
 
     if result:
        return {"products": result}
