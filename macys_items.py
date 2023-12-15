@@ -7,11 +7,10 @@ def fetch_product_info(*keywords):
     base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(keywords)
 
     headers = {
-        # 'authority': 'www.macys.com',
-        # 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        # 'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
-        'user-agent': 'Chrome'
-        # 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+        'authority': 'www.macys.com',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
     }
 
     # Send a request to get the product information
