@@ -77,9 +77,9 @@ def load_features_ids():
 
     return image_features, image_ids
 
-def fetch_product_info(keywords):
-    print(keywords)
-    base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(keywords)
+def fetch_product_info(base_url):
+    # print(keywords)
+    
 
     headers = {
         # 'authority': 'www.macys.com',
@@ -156,10 +156,13 @@ def image_search(query: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+
 @app.post("/get_product_info")
-async def get_product_info(data: dict):
+async def get_product_info(base_url:str):
     # keywords = data.values()
-    result = fetch_product_info(list(data))
+    
+    result = fetch_product_info(base_url)
 
     if result:
        return {"products": result}

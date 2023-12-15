@@ -8,10 +8,11 @@ from snowflake_list import annotations_list
 from macys_items import fetch_product_info
 import requests
 
+# http://127.0.0.1:8000
+# http://3.133.150.2/
+url_clip="http://127.0.0.1:8000/image-search"
 
-url_clip="http://3.133.150.2/image-search"
-
-url_product="http://3.133.150.2/get_product_info"
+url_product="http://127.0.0.1:8000/get_product_info"
 # Collect AWS secrets
 try:
     bucket_name = st.secrets.aws_credentials.bucket_name
@@ -156,10 +157,15 @@ if __name__ == "__main__":
                                                             response_json['Top']['clothing type'],
                                                             response_json['Top']['pattern'],
                                                             Gender]
-                
+                color = response_json['Top']['color']
+                clothing_type = response_json['Top']['clothing type']
+                pattern = response_json['Top']['pattern']
 
+                data = [color,clothing_type,pattern,Gender]
+                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
+                print({"urls": url_top})
                 try:
-                    response = requests.post(url_product, json={"urls": url_top})
+                    response = requests.post(url_product, params={"base_url":base_url})
                     response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
                     Top_recommendations = response.json()
                     count = 1
@@ -171,6 +177,8 @@ if __name__ == "__main__":
                 
                 except requests.exceptions.RequestException as e:
                     print(f"Error fetching products: {e}")
+
+
 
                 st.header("Bottom Recommendations:")
                 # Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
@@ -184,10 +192,15 @@ if __name__ == "__main__":
                                                             response_json['Bottom']['clothing type'],
                                                             response_json['Bottom']['pattern'],
                                                             Gender]
-                
+                color = response_json['Bottom']['color']
+                clothing_type = response_json['Bottom']['clothing type']
+                pattern = response_json['Bottom']['pattern']
 
+                data = [color,clothing_type,pattern,Gender]
+                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
+                print({"urls": url_bottom})
                 try:
-                    response = requests.post(url_product, json={"urls": url_bottom})
+                    response = requests.post(url_product, params={"base_url":base_url})
                     response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
                     Bottom_recommendations = response.json()
                     count = 1
