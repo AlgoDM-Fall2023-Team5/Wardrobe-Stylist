@@ -15,7 +15,7 @@
 
 
   ```bash
-   https://github.com/AlgoDM-Fall2023-Team5/Wardrobe-Stylist.git
+   git clone https://github.com/AlgoDM-Fall2023-Team5/Wardrobe-Stylist.git
    ```
 
 2. Create environment
