@@ -2,9 +2,10 @@
 
 ## Quick Links:🔎
 1. [Streamlit app:](https://personal-wardrobe-stylist.streamlit.app/)🔗
-1. [Project Report:](https://codelabs-preview.appspot.com/?file_id=14KR-KBPghwKZxMpnpFEz6coCYnO3RrRGrVLz4O9mEtU#0)🔗
-2. [Contribution Report:](https://codelabs-preview.appspot.com/?file_id=13lKMy2Ber-Q_mGE-NqYAM6RGd8qVOLkHR4iP-r302ZM#0)🔗
-3. [Video Recording:](https://drive.google.com/drive/folders/1YITehV_SlPCCdj-_-M0vGtchHutTnBjb?usp=drive_link)🔗
+2. [Project Report:](https://codelabs-preview.appspot.com/?file_id=14KR-KBPghwKZxMpnpFEz6coCYnO3RrRGrVLz4O9mEtU#0)🔗
+3. [Contribution Report:](https://codelabs-preview.appspot.com/?file_id=13lKMy2Ber-Q_mGE-NqYAM6RGd8qVOLkHR4iP-r302ZM#0)🔗
+4. [Video Recording:](https://drive.google.com/drive/folders/1YITehV_SlPCCdj-_-M0vGtchHutTnBjb?usp=drive_link)🔗
+5. [User Guide:](https://codelabs-preview.appspot.com/?file_id=1rK05tYKUVYfXsGXxTgk34mNUvEnJMNN64T21XHXgxAM#0)🔗
 
 
 
