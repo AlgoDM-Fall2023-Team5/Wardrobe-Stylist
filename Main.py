@@ -12,7 +12,7 @@ def main():
    
     #Video with a stylish frame
     st.header("🎥 Feature Highlight")
-    st.video("https://youtu.be/TG9C7n1HXBAS", format="video/mp4")
+    st.video("https://youtu.be/TG9C7n1HXBA", format="video/mp4")
 
     # User Guide with a call-to-action button
     st.header("📖 User Guide")
