@@ -7,6 +7,8 @@ import boto3
 from snowflake_list import annotations_list
 from macys_items import fetch_product_info
 import requests
+import time
+#from macys_items import get_product_info
 
 # http://127.0.0.1:8000
 # http://3.133.150.2/
@@ -114,8 +116,8 @@ if __name__ == "__main__":
     try:
         # question ###################
         openai_key = st.sidebar.text_input("Enter your OpenAI Key :")
-        Recommneder_service = st.sidebar.text_input("Enter Recommender Service URL")
-        url_product = str(Recommneder_service) + "/get_product_info"
+        #Recommneder_service = st.sidebar.text_input("Enter Recommender Service URL")
+        #url_product = str(Recommneder_service) + "/get_product_info"
 
         
 
@@ -155,36 +157,36 @@ if __name__ == "__main__":
                 st.write("Reason")
                 st.write(response_json['Reason'])
 
-                # Recommendations
-                st.header("Top Recommendations:")
-                url_top = [response_json['Top']['color'],
-                                                            response_json['Top']['clothing type'],
-                                                            response_json['Top']['pattern'],
-                                                            Gender]
-                color = response_json['Top']['color']
-                clothing_type = response_json['Top']['clothing type']
-                pattern = response_json['Top']['pattern']
+                # # Recommendations
+                # st.header("Top Recommendations:")
+                # url_top = [response_json['Top']['color'],
+                #                                             response_json['Top']['clothing type'],
+                #                                             response_json['Top']['pattern'],
+                #                                             Gender]
+                # color = response_json['Top']['color']
+                # clothing_type = response_json['Top']['clothing type']
+                # pattern = response_json['Top']['pattern']
 
-                data = [color,clothing_type,pattern,Gender]
-                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
-                print({"urls": url_top})
-                try:
-                    response = requests.post(url_product, params={"base_url":base_url})
-                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
-                    Top_recommendations = response.json()
-                    count = 1
-                    for product in Top_recommendations["products"]:
-                        st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
-                        count = count + 1
-                        # product["image_url"]
+                # data = [color,clothing_type,pattern,Gender]
+                # base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
+                # print({"urls": url_top})
+                # try:
+                #     response = requests.post(url_product, params={"base_url":base_url})
+                #     response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+                #     Top_recommendations = response.json()
+                #     count = 1
+                #     for product in Top_recommendations["products"]:
+                #         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
+                #         count = count + 1
+                #         # product["image_url"]
 
                 
-                except requests.exceptions.RequestException as e:
-                    print(f"Error fetching products: {e}")
+                # except requests.exceptions.RequestException as e:
+                #     print(f"Error fetching products: {e}")
 
 
 
-                st.header("Bottom Recommendations:")
+                # st.header("Bottom Recommendations:")
                 # Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
                 #                                             response_json['Bottom']['clothing type'],
                 #                                             response_json['Bottom']['pattern'],
@@ -192,30 +194,61 @@ if __name__ == "__main__":
 
                 # Bottom_recommendations = None
 
-                url_bottom = [response_json['Bottom']['color'],
-                                                            response_json['Bottom']['clothing type'],
-                                                            response_json['Bottom']['pattern'],
-                                                            Gender]
-                color = response_json['Bottom']['color']
-                clothing_type = response_json['Bottom']['clothing type']
-                pattern = response_json['Bottom']['pattern']
+                # url_bottom = [response_json['Bottom']['color'],
+                #                                             response_json['Bottom']['clothing type'],
+                #                                             response_json['Bottom']['pattern'],
+                #                                             Gender]
+                # color = response_json['Bottom']['color']
+                # clothing_type = response_json['Bottom']['clothing type']
+                # pattern = response_json['Bottom']['pattern']
 
-                data = [color,clothing_type,pattern,Gender]
-                base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
-                print({"urls": url_bottom})
-                try:
-                    response = requests.post(url_product, params={"base_url":base_url})
-                    response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
-                    Bottom_recommendations = response.json()
-                    count = 1
-                    for product in Bottom_recommendations["products"]:
-                        st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
-                        count = count + 1
-                        # product["image_url"]
+                # data = [color,clothing_type,pattern,Gender]
+                # base_url = "https://www.macys.com/shop/search?keyword=" + "+".join(data)                        
+                # print({"urls": url_bottom})
+
+                # try:
+                #     response = requests.post(url_product, params={"base_url":base_url})
+                #     response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+                #     Bottom_recommendations = response.json()
+                #     count = 1
+                #     for product in Bottom_recommendations["products"]:
+                #         st.write(f"Product {count}: [link]" + "www.macys.com" + f"{product['product_url']}")
+                #         count = count + 1
+                #         # product["image_url"]
 
                 
-                except requests.exceptions.RequestException as e:
-                    print(f"Error fetching products: {e}")
+                # except requests.exceptions.RequestException as e:
+                #     print(f"Error fetching products: {e}")
+
+            # Recommendations
+            st.header("Top Recommendations:")
+            top_recommendations = fetch_product_info(response_json['Top']['color'],
+                                                    response_json['Top']['clothing type'],
+                                                    "outerwear",
+                                                    response_json['Top']['pattern'],
+                                                    Gender)
+            if top_recommendations:
+                count = 1
+                for product in top_recommendations:
+                    st.write(f"Product {count}: [link]"+"www.macys.com"+f"{product['product_url']}")
+                    count = count + 1
+            else:
+                st.write("Error Retrieving Recommendations")
+
+
+            st.header("Bottom Recommendations:")
+            Bottom_recommendations = fetch_product_info(response_json['Bottom']['color'],
+                                                    response_json['Bottom']['clothing type'],
+                                                    response_json['Bottom']['pattern'],
+                                                    Gender)
+            
+            if Bottom_recommendations:
+                count = 1
+                for product in Bottom_recommendations:
+                    st.write(f"Product {count}: [link]"+"www.macys.com"+f"{product['product_url']}")
+                    count = count + 1
+            else:
+                st.write("Error Retrieving Recommendations")
 
 
                     
